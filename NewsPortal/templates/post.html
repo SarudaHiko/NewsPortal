@@ -1,0 +1,24 @@
+{% extends 'flatpages/default.html' %}
+{% load custom_filters %}
+
+{% block title %}
+    {{ post.title |truncatechars:25 }}
+{% endblock title %}
+
+{% block content %}
+<h3>{{ post.title }}</h3>
+    <td>
+        {% for c in post.category.all %}
+            <a href="#">{{ c.cat_name |capfirst }}</a>&nbsp&nbsp
+        {% endfor %}
+    <td>
+<br>
+<a>{{ post.text|censor }}</a><br>
+<br>
+<a>{{ post.time|date:'d.m.Y H:i' }}</a>
+<hr>
+<td><a href="{% url 'post_edit' pk=post.pk %}">Изменить</a>
+&nbsp&nbsp
+<a href="{% url 'post_delete' pk=post.pk %}">Удалить</a><td>
+
+{% endblock content %}

@@ -1,0 +1,33 @@
+{% extends 'flatpages/default.html' %}
+{% load custom_tags %}
+{% load custom_filters %}
+
+{% block title %}
+{{title}}
+{% endblock title %}
+
+{% block content %}
+   <h1>{{title}}</h1>
+   <h5>На {% current_time '%d.%m.%Yг.' %} доступно  <i>{{ quantity }}</i> публикаций</h5>
+   {% if not no_type %}
+      <a href="''../../create/">Добавить свою</a>
+   {% endif %}
+
+<hr>
+   {% if posts %}
+       <table>
+           {% for post in posts %}
+             <tr>
+               <td><a href="{% url 'post_detail' pk=post.pk %}">{{ post.title|truncatechars:55|censor }}</a></td>
+               <td width="700"><i>{{ post.time|date:'d.m.Y H:i'  }}</i></td>
+               <td><b>{{ post.text |truncatechars:20|censor }}</b> <hr> </td>
+             </tr>
+            {% endfor %}
+       </table>
+   {% else %}
+       <h2>Новостей нет!</h2>
+   {% endif %}
+
+{% include 'flatpages/list_pages.html' %}
+
+{% endblock content %}

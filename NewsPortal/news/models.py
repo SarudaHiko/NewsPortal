@@ -148,3 +148,8 @@ class Comment(models.Model):
 
 class CensorVoc(models.Model):
     word = models.CharField(max_length=128)
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, )
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, )

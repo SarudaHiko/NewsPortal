@@ -2,8 +2,11 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from .filters import PostFilter
 from .forms import PostForm
-from .models import Post, Author
+from .models import Post, Author, Category
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from .utilits import DAY_POST_LIMIT
 
 
 class PostsList(ListView, PermissionRequiredMixin):
@@ -106,3 +109,36 @@ class PostDelete(DeleteView, PermissionRequiredMixin):
     success_url = reverse_lazy('news')
     extra_context = {'title': 'Удалить публикацию'}
 
+
+@login_required
+def subscribe_me(request, slug):
+    user = request.user
+    category = Category.objects.get(slug=slug)
+    categories = Category.objects.filter(subscribers__username=user)
+    if category not in categories:
+        category.subscribers.add(user)
+    return redirect(request.META.get('HTTP_REFERER'))
+
+
+def post_limit_spent_view(request):
+    title = 'Имя_подписчика',
+    limit = DAY_POST_LIMIT
+    return render(request, 'post_limit_spent.html', {'title': title, 'limit': limit})
+
+
+def mail_notify_new_post_view(request):
+    msg_data = {'subscriber_name': 'Имя_подписчика',
+        'new_post_title': 'Заголовок_новой_публикации',
+        'author_first_name': 'Имя_автора',
+        'author_last_name': 'Фамилия_автора',
+        'new_post_time': 'Время_выхода_новой_публикации',
+        'new_post_text': 'Текст_новой_публикации',
+        'new_post_pk': '7',
+    }
+    return render(request, 'notify_new_post.html', {'msg_data': msg_data, })
+
+
+def mail_weekly_notify_posts_view(request):
+    posts = Post.objects.filter(category__slug='it').values('id', 'title', 'time')
+    msg_data = {'subscriber_name': 'Имя_подписчика', 'posts': posts}
+    return render(request, 'weekly_notify_posts.html', {'msg_data': msg_data, })

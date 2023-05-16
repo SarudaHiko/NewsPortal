@@ -47,10 +47,10 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'appointments.apps.AppointmentConfig',
     'django_apscheduler',
+    'news.apps.NewsConfig',
 
     'sign',
     'protect',
-    'news',
     'fpages',
 ]
 
@@ -163,7 +163,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+# ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_FORMS = {'signup': 'sign.models.BasicSignupForm'}
 
 EMAIL_HOST = 'smtp.yandex.ru'
@@ -175,3 +175,9 @@ EMAIL_USE_SSL = True
 APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
 
 APSCHEDULER_RUN_NOW_TIMEOUT = 25
+
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'

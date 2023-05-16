@@ -7,6 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from .utilits import DAY_POST_LIMIT
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 
 
 class PostsList(ListView, PermissionRequiredMixin):
@@ -47,6 +49,16 @@ class PostDetail(DetailView, PermissionRequiredMixin):
     template_name = 'post.html'
     context_object_name = 'post'
     permission_required = ('news.view_post',)
+
+    def get_object(self, *args, **kwargs):
+        obj = cache.get(f'post-{self.kwargs["pk"]}',
+                        None)
+
+        if not obj:
+            obj = super().get_object(queryset=self.queryset)
+            cache.set(f'post-{self.kwargs["pk"]}', obj)
+
+        return obj
 
 
 class PostSearch(ListView):
@@ -110,6 +122,7 @@ class PostDelete(DeleteView, PermissionRequiredMixin):
     extra_context = {'title': 'Удалить публикацию'}
 
 
+@cache_page(60 * 15)
 @login_required
 def subscribe_me(request, slug):
     user = request.user
@@ -120,12 +133,14 @@ def subscribe_me(request, slug):
     return redirect(request.META.get('HTTP_REFERER'))
 
 
+@cache_page(60 * 15)
 def post_limit_spent_view(request):
     title = 'Имя_подписчика',
     limit = DAY_POST_LIMIT
     return render(request, 'post_limit_spent.html', {'title': title, 'limit': limit})
 
 
+@cache_page(60 * 15)
 def mail_notify_new_post_view(request):
     msg_data = {'subscriber_name': 'Имя_подписчика',
         'new_post_title': 'Заголовок_новой_публикации',
@@ -138,6 +153,7 @@ def mail_notify_new_post_view(request):
     return render(request, 'notify_new_post.html', {'msg_data': msg_data, })
 
 
+@cache_page(60 * 15)
 def mail_weekly_notify_posts_view(request):
     posts = Post.objects.filter(category__slug='it').values('id', 'title', 'time')
     msg_data = {'subscriber_name': 'Имя_подписчика', 'posts': posts}

@@ -1,14 +1,21 @@
+from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
 from .filters import PostFilter
 from .forms import PostForm
-from .models import Post, Author, Category
+from .models import Post, Author, Category, Comment, Subscribers
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from .utilits import DAY_POST_LIMIT
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
+from django.utils.translation import gettext as _
+from django.utils import timezone
+import pytz
+from rest_framework import viewsets
+from rest_framework import permissions
+from .serializers import *
 
 
 class PostsList(ListView, PermissionRequiredMixin):
@@ -158,3 +165,52 @@ def mail_weekly_notify_posts_view(request):
     posts = Post.objects.filter(category__slug='it').values('id', 'title', 'time')
     msg_data = {'subscriber_name': 'Имя_подписчика', 'posts': posts}
     return render(request, 'weekly_notify_posts.html', {'msg_data': msg_data, })
+
+
+class Index(View):
+    def get(self, request):
+        curent_time = timezone.now()
+
+        # .  Translators: This message appears on the home page only
+        models = Category.objects.all(), \
+                 Post.objects.all(), \
+                 Author.objects.all(), \
+                 Subscribers.objects.all(), \
+                 Comment.objects.all()
+
+        context = {
+            'models': models,
+            'current_time': timezone.now(),
+            'timezones': pytz.common_timezones  # добавляем в контекст все доступные часовые пояса
+        }
+
+        return HttpResponse(render(request, 'index.html', context))
+
+    def post(self, request):
+        request.session['django_timezone'] = request.POST['timezone']
+        return redirect('/')
+
+
+class AuthorViewset(viewsets.ModelViewSet):
+   queryset = Author.objects.all()
+   serializer_class = AuthorSerializer
+
+
+class CommentViewset(viewsets.ModelViewSet):
+   queryset = Comment.objects.all()
+   serializer_class = CommentSerializer
+
+
+class CategoryViewest(viewsets.ModelViewSet):
+   queryset = Category.objects.all()
+   serializer_class = CategorySerializer
+
+
+class PostViewset(viewsets.ModelViewSet):
+   queryset = Post.objects.all()
+   serializer_class = PostSerializer
+
+
+class SubscribersViewset(viewsets.ModelViewSet):
+   queryset = Subscribers.objects.all()
+   serializer_class = SubscribersSerializer
